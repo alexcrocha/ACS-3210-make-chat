@@ -1,7 +1,8 @@
 $(document).ready(() => {
   const socket = io.connect();
-  //Keep track of the current user
   let currentUser;
+  // Get the online users from the server
+  socket.emit('get online users');
   $('#create-user-btn').click((e) => {
     e.preventDefault();
     if ($('#username-input').val().length > 0) {
@@ -9,7 +10,7 @@ $(document).ready(() => {
       // Save the current user when created
       currentUser = $('#username-input').val();
       $('.username-form').remove();
-        $('.main-container').css('display', 'flex');
+      $('.main-container').css('display', 'flex');
     }
   });
   $('#send-chat-btn').click((e) => {
@@ -34,10 +35,23 @@ $(document).ready(() => {
   //Output the new message
   socket.on('new message', (data) => {
     $('.message-container').append(`
-    <div class="message">
-      <p class="message-user">${data.sender}: </p>
-      <p class="message-text">${data.message}</p>
-    </div>
-  `);
+      <div class="message">
+        <p class="message-user">${data.sender}: </p>
+        <p class="message-text">${data.message}</p>
+      </div>
+    `);
   })
+  socket.on('get online users', (onlineUsers) => {
+    //Our usernames are keys in the object of onlineUsers.
+    for (username in onlineUsers) {
+      $('.users-online').append(`<div class="user-online">${username}</div>`);
+    }
+  })
+  //Refresh the online user list
+  socket.on('user has left', (onlineUsers) => {
+    $('.users-online').empty();
+    for (username in onlineUsers) {
+      $('.users-online').append(`<p>${username}</p>`);
+    }
+  });
 })
