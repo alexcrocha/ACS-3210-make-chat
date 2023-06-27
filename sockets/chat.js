@@ -7,16 +7,19 @@ module.exports = (io, socket, onlineUsers, channels) => {
     console.log(`✋ ${username} has joined the chat! ✋`);
     io.emit("new user", username);
   })
+
   socket.on('new message', (data) => {
     //Save the new message to the channel.
     channels[data.channel].push({ sender: data.sender, message: data.message });
     //Emit only to sockets that are in that channel room.
     io.to(data.channel).emit('new message', data);
   });
+
   socket.on('get online users', () => {
     //Send over the onlineUsers
     socket.emit('get online users', onlineUsers);
   })
+
   // This fires when a user closes out of the application
   // socket.on("disconnect") is a special listener that fires when a user exits out of the application.
   socket.on('disconnect', () => {
@@ -24,9 +27,7 @@ module.exports = (io, socket, onlineUsers, channels) => {
     delete onlineUsers[socket.username]
     io.emit('user has left', onlineUsers);
   });
-  socket.on('new channel', (newChannel) => {
-    console.log(newChannel);
-  });
+
   socket.on('new channel', (newChannel) => {
     //Save the new channel to our channels object. The array will hold the messages.
     channels[newChannel] = [];
@@ -40,6 +41,7 @@ module.exports = (io, socket, onlineUsers, channels) => {
       messages: channels[newChannel]
     });
   });
+
   //Have the socket join the room of the channel
   socket.on('user changed channel', (newChannel) => {
     socket.join(newChannel);
@@ -48,4 +50,10 @@ module.exports = (io, socket, onlineUsers, channels) => {
       messages: channels[newChannel]
     });
   });
+
+  socket.on('get all channels', () => {
+    // Send all the channels to the client
+    socket.emit('get all channels', channels);
+  })
+
 }

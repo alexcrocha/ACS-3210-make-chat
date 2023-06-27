@@ -1,14 +1,20 @@
 $(document).ready(() => {
   const socket = io.connect();
   let currentUser;
+
   socket.emit('get online users');
+
   //Each user should be in the general channel by default.
   socket.emit('user changed channel', "General");
+
+  socket.emit('get all channels');
+
   //Users can change the channel by clicking on its name.
   $(document).on('click', '.channel', (e) => {
     let newChannel = e.target.textContent;
     socket.emit('user changed channel', newChannel);
   });
+
   $('#create-user-btn').click((e) => {
     e.preventDefault();
     if ($('#username-input').val().length > 0) {
@@ -19,6 +25,7 @@ $(document).ready(() => {
       $('.main-container').css('display', 'flex');
     }
   });
+
   $('#send-chat-btn').click((e) => {
     e.preventDefault();
     // Get the client's channel
@@ -34,6 +41,7 @@ $(document).ready(() => {
       $('#chat-input').val("");
     }
   });
+
   $('#new-channel-btn').click(() => {
     let newChannel = $('#new-channel-input').val();
     if (newChannel.length > 0) {
@@ -42,11 +50,13 @@ $(document).ready(() => {
       $('#new-channel-input').val("");
     }
   });
+
   //socket listeners
   socket.on('new user', (username) => {
     console.log(`${username} has joined the chat`);
     $('.users-online').append(`<div class="user-online">${username}</div>`);
   })
+
   //Output the new message
   socket.on('new message', (data) => {
     //Only append the message if the user is currently in that channel
@@ -60,12 +70,14 @@ $(document).ready(() => {
     `);
     }
   });
+
   socket.on('get online users', (onlineUsers) => {
     //Our usernames are keys in the object of onlineUsers.
     for (username in onlineUsers) {
       $('.users-online').append(`<div class="user-online">${username}</div>`);
     }
   })
+
   //Refresh the online user list
   socket.on('user has left', (onlineUsers) => {
     $('.users-online').empty();
@@ -73,10 +85,12 @@ $(document).ready(() => {
       $('.users-online').append(`<p>${username}</p>`);
     }
   });
+
   // Add the new channel to the channels list (Fires for all clients)
   socket.on('new channel', (newChannel) => {
     $('.channels').append(`<div class="channel">${newChannel}</div>`);
   });
+
   // Make the channel joined the current channel. Then load the messages.
   // This only fires for the client who made the channel.
   socket.on('user changed channel', (data) => {
@@ -93,5 +107,14 @@ $(document).ready(() => {
       </div>
     `);
     });
+  });
+
+  //Handle all the channels
+  socket.on('get all channels', (channels) => {
+    for (let channel in channels) {
+      if (channel != "General") {
+        $('.channels').append(`<div class="channel">${channel}</div>`);
+      }
+    }
   });
 })
